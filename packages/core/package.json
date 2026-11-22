@@ -1,13 +1,23 @@
+
 {
   "name": "@mritunjay07/switchly",
   "version": "0.0.1",
   "description": "A lightweight, developer-friendly feature flag management toolkit for Node.js applications.",
+  "author": "Mritunjay Sahu <mritunjaysahu07@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mritunjay-coder07/Switchly"
+  },
+  "bugs": {
+    "url": "https://github.com/mritunjay-coder07/Switchly/issues"
+  },
+  "homepage": "https://github.com/mritunjay-coder07/Switchly#readme",
   "main": "dist/cjs/index.js",
-    "type": "module",
-
+  "type": "module",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     }
@@ -20,8 +30,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist"
   },
+  "files": ["dist"],
   "devDependencies": {
     "typescript": "5.5.4",
     "rimraf": "5.0.5"
-  }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
 }

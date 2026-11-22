@@ -10,14 +10,16 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "clean": "npm run clean --workspaces",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "typecheck": "npm run typecheck --workspaces",
     "clean": "npm run clean --workspaces"
   },
   "license": "MIT",
-  "keywords": ["feature flag", "toggle", "typescript", "node"],
+  "keywords": [
+    "feature-flags",
+    "feature-toggle",
+    "typescript",
+    "node",
+    "feature-management"
+  ],
   "engines": {
     "node": ">=18"
   }
