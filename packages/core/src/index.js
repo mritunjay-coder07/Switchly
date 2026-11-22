@@ -1,25 +1,47 @@
-// Switchly - Feature Flag Management Toolkit
-// Provides a full‑feature in‑memory manager supporting:
-//   • Boolean & percentage rollouts
-//   • Targeting rules (userId / attributes)
-//   • Environment‑scoped configurations
-//   • Deterministic hashing (FNV‑a) for rollouts
-//   • Structured evaluation results with reason codes
+// Switchly – Feature Flag Management Toolkit (JavaScript implementation)
+// Provides in‑memory flag management with environments, targeting, and deterministic rollouts.
 
-import { EvaluationResult, EvaluationContext, FeatureFlagConfig, EvaluationReason, TargetRule } from "./types.js";
-/** In‑memory manager for feature flags. */
+/** Evaluation reason codes */
+export const EvaluationReason = {
+  STATIC_ENABLED: "STATIC_ENABLED",
+  STATIC_DISABLED: "STATIC_DISABLED",
+  TARGET_MATCH: "TARGET_MATCH",
+  PERCENTAGE_ROLLOUT: "PERCENTAGE_ROLLOUT",
+  DEFAULT_VALUE: "DEFAULT_VALUE",
+  FLAG_NOT_FOUND: "FLAG_NOT_FOUND",
+};
+
+/**
+ * Factory function to create a new FeatureFlagManager instance.
+ */
+export function createSwitchly() {
+  return new FeatureFlagManager();
+}
+
 export class FeatureFlagManager {
-  /** env → flagKey → config */
-  private store: Map<string, Map<string, FeatureFlagConfig>> = new Map();
+  constructor() {
+    // Default environment used when none is specified in method calls
+    this.defaultEnv = "development";
+    /** env → flagKey → config */
+    this.store = new Map(); // Map<string, Map<string, FeatureFlagConfig>>
+  }
+
+  /** Set the default environment for subsequent calls that omit the env argument */
+  setEnvironment(env) {
+    if (!env || typeof env !== "string") {
+      throw new Error("Environment must be a non‑empty string.");
+    }
+    this.defaultEnv = env;
+  }
+
+  /** Get the currently configured default environment */
+  getEnvironment() {
+    return this.defaultEnv;
+  }
 
   /** Register a flag using a simple key/boolean signature or full config. */
-  registerFlag(
-    keyOrConfig: string | FeatureFlagConfig,
-    enabledOrEnv?: boolean | string,
-    envOrOverwrite?: string | boolean,
-    maybeOverwrite?: boolean,
-  ): void {
-    let config: FeatureFlagConfig;
+  registerFlag(keyOrConfig, enabledOrEnv, envOrOverwrite, maybeOverwrite) {
+    let config;
     let env = "development";
     let overwrite = false;
 
@@ -30,7 +52,8 @@ export class FeatureFlagManager {
       else if (typeof envOrOverwrite === "string") env = envOrOverwrite;
       if (typeof envOrOverwrite === "boolean") overwrite = envOrOverwrite;
       else if (typeof maybeOverwrite === "boolean") overwrite = maybeOverwrite;
-      config = { key, ...(enabled !== undefined ? { enabled } : {}) } as FeatureFlagConfig;
+      config = { key };
+      if (enabled !== undefined) config.enabled = enabled;
     } else {
       config = keyOrConfig;
       if (typeof enabledOrEnv === "string") env = enabledOrEnv;
@@ -46,25 +69,20 @@ export class FeatureFlagManager {
   }
 
   /** Retrieve a deep‑frozen copy of a flag configuration (or undefined). */
-  getFlag(key: string, env: string = "development"): FeatureFlagConfig | undefined {
+  getFlag(key, env = "development") {
     const cfg = this.ensureEnv(env).get(key);
     return cfg ? Object.freeze({ ...cfg }) : undefined;
   }
 
   /** Convenience method to check if a flag is enabled (boolean only). */
-  isEnabled(key: string, env: string = "development"): boolean {
+  isEnabled(key, env = "development") {
     const cfg = this.getFlag(key, env);
     return cfg?.enabled === true;
   }
 
   /** Update an existing flag or create it if missing. */
-  updateFlag(
-    keyOrConfig: string | FeatureFlagConfig,
-    enabledOrEnv?: boolean | string,
-    envOrOverwrite?: string | boolean,
-    maybeOverwrite?: boolean,
-  ): void {
-    let config: FeatureFlagConfig;
+  updateFlag(keyOrConfig, enabledOrEnv, envOrOverwrite, maybeOverwrite) {
+    let config;
     let env = "development";
     let overwrite = true;
 
@@ -75,7 +93,8 @@ export class FeatureFlagManager {
       else if (typeof envOrOverwrite === "string") env = envOrOverwrite;
       if (typeof envOrOverwrite === "boolean") overwrite = envOrOverwrite;
       else if (typeof maybeOverwrite === "boolean") overwrite = maybeOverwrite;
-      config = { key, ...(enabled !== undefined ? { enabled } : {}) } as FeatureFlagConfig;
+      config = { key };
+      if (enabled !== undefined) config.enabled = enabled;
     } else {
       config = keyOrConfig;
       if (typeof enabledOrEnv === "string") env = enabledOrEnv;
@@ -91,17 +110,22 @@ export class FeatureFlagManager {
   }
 
   /** Remove a flag from the given environment. */
-  removeFlag(key: string, env: string = "development"): void {
+  removeFlag(key, env = "development") {
     this.ensureEnv(env).delete(key);
   }
 
   /** List all flag configurations for an environment. */
-  listFlags(env: string = "development"): FeatureFlagConfig[] {
+  listFlags(env = "development") {
     return Array.from(this.ensureEnv(env).values());
   }
 
+  /** Alias for listFlags – returns all flag configurations for the current default environment. */
+  getAllFlags() {
+    return this.listFlags(this.defaultEnv);
+  }
+
   /** Evaluate a flag for a specific user/context. */
-  evaluate(key: string, context: EvaluationContext): EvaluationResult {
+  evaluate(key, context) {
     const cfg = this.getFlag(key, context.environment);
     if (!cfg) {
       return {
@@ -149,12 +173,12 @@ export class FeatureFlagManager {
   // -----------------------------------------------------------------
   // Private helpers
   // -----------------------------------------------------------------
-  private ensureEnv(env: string): Map<string, FeatureFlagConfig> {
+  ensureEnv(env) {
     if (!this.store.has(env)) this.store.set(env, new Map());
-    return this.store.get(env)!;
+    return this.store.get(env);
   }
 
-  private matchesTarget(rule: TargetRule, ctx: EvaluationContext): boolean {
+  matchesTarget(rule, ctx) {
     if (rule.userId && rule.userId === ctx.userId) return true;
     if (rule.attributes && ctx.attributes) {
       return Object.entries(rule.attributes).every(([k, v]) => ctx.attributes?.[k] === v);
@@ -163,16 +187,16 @@ export class FeatureFlagManager {
   }
 
   /** Simple deterministic FNV‑a hash – pure JS, zero dependencies. */
-  private stableHash(str: string): number {
+  stableHash(str) {
     let hash = 0x811c9dc5; // FNV offset basis
     for (let i = 0; i < str.length; i++) {
       hash ^= str.charCodeAt(i);
-      hash = (hash * 0x01000193) >>> 0; // 32‑bit FNV prime
+      hash = (hash * 0x01000193) >>> 0; // 32‑bit FNV prime, unsigned
     }
     return hash;
   }
 
-  private validateConfig(cfg: FeatureFlagConfig): void {
+  validateConfig(cfg) {
     if (!cfg.key || typeof cfg.key !== "string") {
       throw new Error("Flag key must be a non‑empty string.");
     }
@@ -197,12 +221,3 @@ export class FeatureFlagManager {
     }
   }
 }
-
-// Re‑export public types for consumers
-export {
-  EvaluationReason,
-  EvaluationResult,
-  EvaluationContext,
-  FeatureFlagConfig,
-  TargetRule,
-};
