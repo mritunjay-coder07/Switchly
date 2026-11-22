@@ -1,0 +1,27 @@
+{
+  "name": "@mritunjay07/switchly",
+  "version": "0.0.1",
+  "description": "A lightweight, developer-friendly feature flag management toolkit for Node.js applications.",
+  "main": "dist/cjs/index.js",
+    "type": "module",
+
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig.json --module commonjs --outDir dist/cjs",
+    "test": "npm run build && node --test ./test/**/*.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "typescript": "5.5.4",
+    "rimraf": "5.0.5"
+  }
+}
