@@ -1,0 +1,43 @@
+{
+  "name": "@mritunjay07/switchly",
+  "version": "0.1.0",
+  "description": "Lightweight feature flag management toolkit for Node.js applications.",
+  "author": {
+    "name": "Mritunjay Sahu",
+    "email": "mritunjaysahu07@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mritunjay-coder07/switchly.git"
+  },
+  "homepage": "https://github.com/mritunjay-coder07/switchly#readme",
+  "bugs": {
+    "url": "https://github.com/mritunjay-coder07/switchly/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "test": "npm run build && node --test dist/__tests__/**/*.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs.js",
+      "import": "./dist/index.esm.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20"
+  }
+}
